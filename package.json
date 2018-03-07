@@ -9,7 +9,7 @@
     "build-js": "babel src/js -d lib/js",
     "build-css": "postcss src/css --dir lib/css",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "npm run build"
+    "install": "npm build"
   },
   "keywords": [],
   "author": "Mikhail Voronov <heymexa@gmail.com>",
