@@ -1,0 +1,20 @@
+{
+  "extends": "airbnb-base",
+  "env": {
+    "browser": true,
+    "node": true,
+    "amd": true,
+    "jquery": true
+  },
+  "globals": {
+    "define": true,
+    "module": true
+  },
+  "rules": {
+    "no-console": "off",
+    "linebreak-style": "off",
+    "arrow-parens": ["error", "as-needed"],
+    "max-len": ["error", { "code": 120 }],
+    "comma-dangle": ["error", "never"]
+  }
+}
