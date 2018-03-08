@@ -43,6 +43,7 @@ The plugin uses to compatibility some options from the plugin `image.js`.
 ## Building
 
 ```shell
+npm install
 npm run build
 ```
 
