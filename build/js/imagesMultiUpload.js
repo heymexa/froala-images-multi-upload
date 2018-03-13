@@ -339,7 +339,7 @@ if (!Array.prototype.find) {
         this.editor.events.disableBlur();
         var uploadedImages = this.images.filter(function (image) {
           return image.getStatus() === IMAGE_UPLOAD_STATUS_SUCCESS;
-        });
+        }).reverse();
         this.insertImages(uploadedImages);
         this.editor.events.enableBlur();
       }
@@ -358,6 +358,7 @@ if (!Array.prototype.find) {
         this.editor.events.on('image.inserted', function ($img) {
           /* eslint-disable */
           new ImageInsert($img, _this5.editor);
+          _this5.editor.selection.setAfter($img.get(0));
           /* eslint-enable */
           imgIndex += 1;
           if (!images[imgIndex]) {

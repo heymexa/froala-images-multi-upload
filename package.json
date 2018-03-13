@@ -1,6 +1,6 @@
 {
   "name": "froala-images-multi-upload",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Plugin for Froala Wysiwyg Editor. The plugin allows to upload one or more images to the server.",
   "main": "./build/js/imagesMultiUpload.js",
   "bugs": {

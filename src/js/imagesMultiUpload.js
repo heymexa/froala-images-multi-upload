@@ -305,7 +305,7 @@ if (!Array.prototype.find) {
         return;
       }
       this.editor.events.disableBlur();
-      const uploadedImages = this.images.filter(image => image.getStatus() === IMAGE_UPLOAD_STATUS_SUCCESS);
+      const uploadedImages = this.images.filter(image => image.getStatus() === IMAGE_UPLOAD_STATUS_SUCCESS).reverse();
       this.insertImages(uploadedImages);
       this.editor.events.enableBlur();
     }
@@ -320,6 +320,7 @@ if (!Array.prototype.find) {
       this.editor.events.on('image.inserted', $img => {
         /* eslint-disable */
         new ImageInsert($img, this.editor);
+        this.editor.selection.setAfter($img.get(0));
         /* eslint-enable */
         imgIndex += 1;
         if (!images[imgIndex]) {
