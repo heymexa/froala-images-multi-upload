@@ -53,7 +53,8 @@ if (!Array.prototype.find) {
   }
   /* eslint-enable */
 })($ => {
-  const POPUP_NAME = 'imagesMultiUpload.popup';
+  const PLUGIN_NAME = 'imagesMultiUpload';
+  const POPUP_NAME = `${PLUGIN_NAME}.popup`;
 
   const dropZone = `
     <div class="fr-image-upload-layer fr-active fr-layer fp-image-upload-dropzone">
@@ -164,6 +165,7 @@ if (!Array.prototype.find) {
       Object.keys(this.editor.opts.imageUploadParams).forEach(uploadParam => {
         formData.append(uploadParam, this.editor.opts.imageUploadParams[uploadParam]);
       });
+      console.log(this.editor.opts.imageUploadURL);
 
       this.xhr = $.ajax({
         url: this.editor.opts.imageUploadURL,
@@ -420,7 +422,7 @@ if (!Array.prototype.find) {
     show() {
       const { editor } = this;
       editor.popups.setContainer(this.name, editor.$tb);
-      const $btn = editor.$tb.find('.fr-command[data-cmd="imagesMultiUpload"]');
+      const $btn = editor.$tb.find(`.fr-command[data-cmd="${PLUGIN_NAME}"]`);
       const left = $btn.offset().left + ($btn.outerWidth() / 2); // prettier-ignore
       const top = $btn.offset().top + (editor.opts.toolbarBottom ? 10 : $btn.outerHeight() - 10);
       editor.popups.show(this.name, left, top, $btn.outerHeight());
@@ -496,7 +498,7 @@ if (!Array.prototype.find) {
   $.extend($.FroalaEditor.POPUP_TEMPLATES, templates);
 
   /* eslint-disable */
-  $.FroalaEditor.PLUGINS.imagesMultiUpload = editor => {
+  $.FroalaEditor.PLUGINS[PLUGIN_NAME] = editor => {
     /* eslint-enable */
     let uploadPopup;
 
@@ -516,16 +518,17 @@ if (!Array.prototype.find) {
     };
   };
 
-  $.FroalaEditor.DefineIcon('imagesMultiUploadIcon', { NAME: 'file-image-o' });
-  $.FroalaEditor.RegisterCommand('imagesMultiUpload', {
+  const icon = `${PLUGIN_NAME}Icon`;
+  $.FroalaEditor.DefineIcon(icon, { NAME: 'file-image-o' });
+  $.FroalaEditor.RegisterCommand(PLUGIN_NAME, {
     title: 'Images Multi Upload',
-    icon: 'imagesMultiUploadIcon',
+    icon,
     undo: false,
     focus: false,
-    plugin: 'imagesMultiUpload',
+    plugin: PLUGIN_NAME,
     showOnMobile: true,
     callback: function callback() {
-      this.imagesMultiUpload.showPopup();
+      this[PLUGIN_NAME].showPopup();
     }
   });
 });

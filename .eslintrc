@@ -15,6 +15,7 @@
     "linebreak-style": "off",
     "arrow-parens": ["error", "as-needed"],
     "max-len": ["error", { "code": 120 }],
-    "comma-dangle": ["error", "never"]
+    "comma-dangle": ["error", "never"],
+    "operator-linebreak": "off"
   }
 }

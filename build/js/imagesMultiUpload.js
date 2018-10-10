@@ -61,7 +61,8 @@ if (!Array.prototype.find) {
   }
   /* eslint-enable */
 }(function ($) {
-  var POPUP_NAME = 'imagesMultiUpload.popup';
+  var PLUGIN_NAME = 'imagesMultiUpload';
+  var POPUP_NAME = PLUGIN_NAME + '.popup';
 
   var dropZone = '\n    <div class="fr-image-upload-layer fr-active fr-layer fp-image-upload-dropzone">\n      <strong>Drop image</strong><br>(or click)\n      <div class="fr-form">\n        <input type="file" multiple="" accept="image/jpeg, image/jpg, image/png, image/gif" \n            tabindex="-1" aria-labelledby="fr-image-upload-layer-1" role="button" dir="auto">\n      </div>\n    </div>';
   var multiUpload = '\n    <div class="multi-upload">\n    <div class="multi-upload__content"></div>\n    <div class="multi-upload__buttons">\n        <button class="multi-upload__btn multi-upload__insert-btn" disabled>Insert images</button>\n        <button class="multi-upload__btn multi-upload__cancel-btn">Cancel</button>\n    </div></div>';
@@ -167,6 +168,7 @@ if (!Array.prototype.find) {
         Object.keys(this.editor.opts.imageUploadParams).forEach(function (uploadParam) {
           formData.append(uploadParam, _this2.editor.opts.imageUploadParams[uploadParam]);
         });
+        console.log(this.editor.opts.imageUploadURL);
 
         this.xhr = $.ajax({
           url: this.editor.opts.imageUploadURL,
@@ -475,7 +477,7 @@ if (!Array.prototype.find) {
         var editor = this.editor;
 
         editor.popups.setContainer(this.name, editor.$tb);
-        var $btn = editor.$tb.find('.fr-command[data-cmd="imagesMultiUpload"]');
+        var $btn = editor.$tb.find('.fr-command[data-cmd="' + PLUGIN_NAME + '"]');
         var left = $btn.offset().left + $btn.outerWidth() / 2; // prettier-ignore
         var top = $btn.offset().top + (editor.opts.toolbarBottom ? 10 : $btn.outerHeight() - 10);
         editor.popups.show(this.name, left, top, $btn.outerHeight());
@@ -537,7 +539,7 @@ if (!Array.prototype.find) {
   $.extend($.FroalaEditor.POPUP_TEMPLATES, templates);
 
   /* eslint-disable */
-  $.FroalaEditor.PLUGINS.imagesMultiUpload = function (editor) {
+  $.FroalaEditor.PLUGINS[PLUGIN_NAME] = function (editor) {
     /* eslint-enable */
     var uploadPopup = void 0;
 
@@ -557,16 +559,17 @@ if (!Array.prototype.find) {
     };
   };
 
-  $.FroalaEditor.DefineIcon('imagesMultiUploadIcon', { NAME: 'file-image-o' });
-  $.FroalaEditor.RegisterCommand('imagesMultiUpload', {
+  var icon = PLUGIN_NAME + 'Icon';
+  $.FroalaEditor.DefineIcon(icon, { NAME: 'file-image-o' });
+  $.FroalaEditor.RegisterCommand(PLUGIN_NAME, {
     title: 'Images Multi Upload',
-    icon: 'imagesMultiUploadIcon',
+    icon: icon,
     undo: false,
     focus: false,
-    plugin: 'imagesMultiUpload',
+    plugin: PLUGIN_NAME,
     showOnMobile: true,
     callback: function callback() {
-      this.imagesMultiUpload.showPopup();
+      this[PLUGIN_NAME].showPopup();
     }
   });
 });
