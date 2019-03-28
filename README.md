@@ -38,8 +38,15 @@ The plugin uses to compatibility some options from the plugin `image.js`.
 * `imageUploadParams` - Pass additional parameters to the upload request.
 * `imageAllowedTypes` - The list of image types that are allowed to be uploaded. Although this will restrict uploading other types of files, we strongly recommend you to check the file type on the server too.
 * `imageMaxSize` - The maximum image size allowed on upload in bytes. The default value is 10MB. Although this makes an additional check before uploading the image, it is highly recommended to check image size on your server too.
-
 * [`imageUploadToS3`](https://www.froala.com/wysiwyg-editor/docs/options#imageUploadToS3) - Set the options for image upload to S3. All the fields from the example below are required. Also make sure that you have enabled CORS on Amazon.
+
+Add plugin name(`imagesMultiUpload`) to editor option(`toolbarButtons`)
+```
+$('.selector').froalaEditor({
+  toolbarButtons: ['imagesMultiUpload']
+});
+```
+
 
 ## Building
 
