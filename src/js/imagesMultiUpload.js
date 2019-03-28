@@ -161,14 +161,32 @@ if (!Array.prototype.find) {
       this.startLoading();
 
       const formData = new FormData();
+
+      let uploadURL = this.editor.opts.imageUploadURL;
+
+      if (this.editor.opts.imageUploadToS3) {
+        formData.append('key',
+          `${this.editor.opts.imageUploadToS3.keyStart}${(new Date()).getTime()}-${(this.image.name || 'untitled')}`);
+        formData.append('success_action_status', '201');
+        formData.append('X-Requested-With', 'xhr');
+        formData.append('Content-Type', this.image.type);
+        Object.keys(this.editor.opts.imageUploadToS3.params).forEach(s3Param => {
+          formData.append(s3Param, this.editor.opts.imageUploadToS3.params[s3Param]);
+        });
+
+        uploadURL = this.editor.opts.imageUploadToS3.uploadURL ?
+          this.editor.opts.imageUploadToS3.uploadURL :
+          `https://${this.editor.opts.imageUploadToS3.region}.amazonaws.com/${this.editor.opts.imageUploadToS3.bucket}`;
+      }
+
       formData.append(this.editor.opts.imageUploadParam, this.image, this.image.name);
       Object.keys(this.editor.opts.imageUploadParams).forEach(uploadParam => {
         formData.append(uploadParam, this.editor.opts.imageUploadParams[uploadParam]);
       });
-      console.log(this.editor.opts.imageUploadURL);
 
+      console.log(uploadURL);
       this.xhr = $.ajax({
-        url: this.editor.opts.imageUploadURL,
+        url: uploadURL,
         type: 'POST',
         data: formData,
         processData: false,
@@ -179,13 +197,18 @@ if (!Array.prototype.find) {
           if (typeof response === 'string') {
             response = JSON.parse(response);
           }
-          if (!response.link) {
+          if (this.editor.opts.imageUploadToS3) {
+            this.url = response.getElementsByTagName('Location')[0].innerHTML;
+          } else {
+            this.url = response.link;
+          }
+
+          if (!this.url) {
             this.error();
           }
           if (!ImageUpload.isFileReaderAvailable()) {
-            this.renderImage(response.link);
+            this.renderImage(this.url);
           }
-          this.url = response.link;
           this.setStatus(IMAGE_UPLOAD_STATUS_SUCCESS);
         },
         error: () => {

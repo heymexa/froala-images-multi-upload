@@ -164,14 +164,29 @@ if (!Array.prototype.find) {
         this.startLoading();
 
         var formData = new FormData();
+
+        var uploadURL = this.editor.opts.imageUploadURL;
+
+        if (this.editor.opts.imageUploadToS3) {
+          formData.append('key', '' + this.editor.opts.imageUploadToS3.keyStart + new Date().getTime() + '-' + (this.image.name || 'untitled'));
+          formData.append('success_action_status', '201');
+          formData.append('X-Requested-With', 'xhr');
+          formData.append('Content-Type', this.image.type);
+          Object.keys(this.editor.opts.imageUploadToS3.params).forEach(function (s3Param) {
+            formData.append(s3Param, _this2.editor.opts.imageUploadToS3.params[s3Param]);
+          });
+
+          uploadURL = this.editor.opts.imageUploadToS3.uploadURL ? this.editor.opts.imageUploadToS3.uploadURL : 'https://' + this.editor.opts.imageUploadToS3.region + '.amazonaws.com/' + this.editor.opts.imageUploadToS3.bucket;
+        }
+
         formData.append(this.editor.opts.imageUploadParam, this.image, this.image.name);
         Object.keys(this.editor.opts.imageUploadParams).forEach(function (uploadParam) {
           formData.append(uploadParam, _this2.editor.opts.imageUploadParams[uploadParam]);
         });
-        console.log(this.editor.opts.imageUploadURL);
 
+        console.log(uploadURL);
         this.xhr = $.ajax({
-          url: this.editor.opts.imageUploadURL,
+          url: uploadURL,
           type: 'POST',
           data: formData,
           processData: false,
@@ -182,13 +197,18 @@ if (!Array.prototype.find) {
             if (typeof response === 'string') {
               response = JSON.parse(response);
             }
-            if (!response.link) {
+            if (_this2.editor.opts.imageUploadToS3) {
+              _this2.url = response.getElementsByTagName('Location')[0].innerHTML;
+            } else {
+              _this2.url = response.link;
+            }
+
+            if (!_this2.url) {
               _this2.error();
             }
             if (!ImageUpload.isFileReaderAvailable()) {
-              _this2.renderImage(response.link);
+              _this2.renderImage(_this2.url);
             }
-            _this2.url = response.link;
             _this2.setStatus(IMAGE_UPLOAD_STATUS_SUCCESS);
           },
           error: function error() {
