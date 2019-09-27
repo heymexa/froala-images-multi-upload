@@ -1,60 +1,16 @@
-/**
- * @todo setTimeout in {@link ImageUpload.prototype.trigger}
- */
-
 /* eslint-disable */
-if (!Array.prototype.find) {
-  Array.prototype.find = function(predicate) {
-    if (this == null) {
-      throw new TypeError('Array.prototype.find called on null or undefined');
-    }
-    if (typeof predicate !== 'function') {
-      throw new TypeError('predicate must be a function');
-    }
-    var list = Object(this);
-    var length = list.length >>> 0;
-    var thisArg = arguments[1];
-    var value;
-
-    for (var i = 0; i < length; i++) {
-      value = list[i];
-      if (predicate.call(thisArg, value, i, list)) {
-        return value;
-      }
-    }
-    return undefined;
-  };
-}
-
-/* global define:true */
-!(function(factory) {
-  if (typeof define === 'function' && define.amd) {
-    // AMD. Register as an anonymous module.
-    define(['jquery'], factory);
-  } else if (typeof module === 'object' && module.exports) {
-    // Node/CommonJS
-    module.exports = function(root, jQuery) {
-      if (jQuery === undefined) {
-        // require('jQuery') returns a factory that requires window to
-        // build a jQuery instance, we normalize how we use modules
-        // that require this pattern but the window provided is a noop
-        // if it's defined (how jquery works)
-        if (typeof window !== 'undefined') {
-          jQuery = require('jquery');
-        } else {
-          jQuery = require('jquery')(root);
-        }
-      }
-      return factory(jQuery);
-    };
-  } else {
-    // Browser globals
-    factory(window.jQuery);
-  }
+!(function(window, callback) {
+  'object' == typeof exports && 'undefined' != typeof module
+    ? callback(require('froala-editor'))
+    : 'function' == typeof define && define.amd
+    ? define(['froala-editor'], callback)
+    : callback(window.FroalaEditor);
   /* eslint-enable */
-})($ => {
+})(window, FroalaEditor => {
   const PLUGIN_NAME = 'imagesMultiUpload';
   const POPUP_NAME = `${PLUGIN_NAME}.popup`;
+
+  let $ = null;
 
   const dropZone = `
     <div class="fr-image-upload-layer fr-active fr-layer fp-image-upload-dropzone">
@@ -79,8 +35,8 @@ if (!Array.prototype.find) {
 
   class ImageUpload {
     constructor(options) {
-      this.$el = $(`
-      <div class="upload-image">
+      this.$ = options.$;
+      this.$el = $(`<div class="upload-image">
         <div class="upload-image__container">
         <div class="upload-image__progressbar"><div class="upload-image__progressbar-line"></div></div>
         <div class="upload-image__image"></div>
@@ -94,6 +50,9 @@ if (!Array.prototype.find) {
       this.url = null;
       this.status = 0;
       this.xhr = null;
+
+      this.onStatusChange = options.onStatusChange;
+      this.onImageRemove = options.onImageRemove;
 
       this.handleEvents();
     }
@@ -165,56 +124,48 @@ if (!Array.prototype.find) {
       Object.keys(this.editor.opts.imageUploadParams).forEach(uploadParam => {
         formData.append(uploadParam, this.editor.opts.imageUploadParams[uploadParam]);
       });
-      console.log(this.editor.opts.imageUploadURL);
 
-      this.xhr = $.ajax({
-        url: this.editor.opts.imageUploadURL,
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        context: this,
-        success: data => {
-          let response = data;
-          if (typeof response === 'string') {
-            response = JSON.parse(response);
-          }
-          if (!response.link) {
-            this.error();
-          }
-          if (!ImageUpload.isFileReaderAvailable()) {
-            this.renderImage(response.link);
-          }
-          this.url = response.link;
-          this.setStatus(IMAGE_UPLOAD_STATUS_SUCCESS);
-        },
-        error: () => {
-          this.error();
-        },
-        complete: () => {
-          this.stopLoading();
-        },
-        xhr: () => {
-          const xhr = new XMLHttpRequest();
-          xhr.upload.addEventListener(
-            'progress',
-            evt => {
-              if (evt.lengthComputable) {
-                let percentComplete = evt.loaded / evt.total;
-                percentComplete = parseInt(percentComplete * 100, 10);
-                this.changeProgress(percentComplete);
-              }
-            },
-            false
-          );
-          return xhr;
+      this.xhr = new XMLHttpRequest();
+      this.xhr.onload = () => {
+        console.log('image load');
+        this.stopLoading();
+        let response = this.xhr.responseText;
+        if (typeof response === 'string') {
+          response = JSON.parse(response);
         }
-      });
+        if (!response.link) {
+          this.error();
+        }
+        if (!ImageUpload.isFileReaderAvailable()) {
+          this.renderImage(response.link);
+        }
+        this.url = response.link;
+        this.setStatus(IMAGE_UPLOAD_STATUS_SUCCESS);
+      };
+      this.xhr.onerror = () => {
+        this.stopLoading();
+        this.error();
+      };
+      this.xhr.upload.addEventListener(
+        'progress',
+        evt => {
+          console.log(evt);
+          if (evt.lengthComputable) {
+            let percentComplete = evt.loaded / evt.total;
+            percentComplete = parseInt(percentComplete * 100, 10);
+            this.changeProgress(percentComplete);
+          }
+        },
+        false
+      );
+      this.xhr.open('POST', this.editor.opts.imageUploadURL);
+      this.xhr.send(formData);
     }
 
     setStatus(status) {
       this.status = status;
-      this.trigger('changeStatus', status);
+      this.onStatusChange(status);
+      // this.trigger('changeStatus', status);
     }
 
     render() {
@@ -223,7 +174,8 @@ if (!Array.prototype.find) {
 
     onRemove(event) {
       event.preventDefault();
-      this.trigger('imageRemove', this);
+      this.onImageRemove(this);
+      // this.trigger('imageRemove', this);
     }
 
     remove() {
@@ -267,6 +219,7 @@ if (!Array.prototype.find) {
 
   class ImagesUpload {
     constructor(options) {
+      this.$ = options.$;
       this.$el = $(options.el);
       this.$content = this.$el.find('.multi-upload__content');
       this.$insertButton = this.$el.find('.multi-upload__insert-btn');
@@ -351,8 +304,13 @@ if (!Array.prototype.find) {
 
       [].forEach.call(files, file => {
         if (this.validate(file)) {
-          const image = new ImageUpload({ file, editor: this.editor });
-          this.handleImageEvents(image);
+          const image = new ImageUpload({
+            file,
+            editor: this.editor,
+            $,
+            onImageRemove: this.onImageRemove.bind(this),
+            onStatusChange: this.onStatusChange.bind(this)
+          });
           this.$content.append(image.render());
           image.upload();
           this.images.push(image);
@@ -367,21 +325,18 @@ if (!Array.prototype.find) {
       );
     }
 
-    handleImageEvents(image) {
-      image.on('imageRemove', this.onImageRemove.bind(this, image));
-      image.on('changeStatus', this.onStatusChange.bind(this));
-    }
-
     onStatusChange() {
       this.checkInsertButton();
     }
 
     checkInsertButton() {
       const disabled = !this.images.find(image => image.status === IMAGE_UPLOAD_STATUS_SUCCESS);
-      this.$insertButton.prop('disabled', disabled);
+      // this.$insertButton.attr('disabled', disabled);
+      this.$insertButton[0].disabled = disabled;
     }
 
     onImageRemove(image) {
+      console.log('image remove', image);
       const index = this.images.indexOf(image);
       if (index === -1) {
         return;
@@ -401,6 +356,7 @@ if (!Array.prototype.find) {
       this.name = options.name;
       this.$popup = null;
       this.imagesUpload = null;
+      this.$ = options.$;
 
       this.init();
     }
@@ -413,7 +369,8 @@ if (!Array.prototype.find) {
       this.$popup = this.editor.popups.create(this.name, template);
       this.imagesUpload = new ImagesUpload({
         editor: this.editor,
-        el: this.$popup.find('.multi-upload')
+        el: this.$popup.find('.multi-upload'),
+        $: this.$
       });
       this.handleEvents();
       return this.$popup;
@@ -493,21 +450,23 @@ if (!Array.prototype.find) {
     }
   }
 
-  const templates = {};
-  templates[POPUP_NAME] = '[_CUSTOM_LAYER_]';
-  $.extend($.FroalaEditor.POPUP_TEMPLATES, templates);
+  /* eslint-disable-next-line */
+  FroalaEditor.POPUP_TEMPLATES[POPUP_NAME] = '[_CUSTOM_LAYER_]';
 
-  /* eslint-disable */
-  $.FroalaEditor.PLUGINS[PLUGIN_NAME] = editor => {
-    /* eslint-enable */
+  /* eslint-disable-next-line */
+  FroalaEditor.PLUGINS[PLUGIN_NAME] = editor => {
     let uploadPopup;
+
+    /* eslint-disable-next-line */
+    $ = editor.$;
 
     function showPopup() {
       if (!uploadPopup) {
         uploadPopup = new UploadPopup({
           editor,
           template: dropTemplate,
-          name: POPUP_NAME
+          name: POPUP_NAME,
+          $: editor.$
         });
       }
       uploadPopup.show();
@@ -518,11 +477,11 @@ if (!Array.prototype.find) {
     };
   };
 
-  const icon = `${PLUGIN_NAME}Icon`;
-  $.FroalaEditor.DefineIcon(icon, { NAME: 'file-image-o' });
-  $.FroalaEditor.RegisterCommand(PLUGIN_NAME, {
+  const iconName = `${PLUGIN_NAME}Icon`;
+  FroalaEditor.DefineIcon(iconName, { NAME: 'image', SVG_KEY: 'insertImage' });
+  FroalaEditor.RegisterCommand(PLUGIN_NAME, {
     title: 'Images Multi Upload',
-    icon,
+    icon: iconName,
     undo: false,
     focus: false,
     plugin: PLUGIN_NAME,
