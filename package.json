@@ -1,6 +1,6 @@
 {
   "name": "froala-images-multi-upload",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "Plugin for Froala Wysiwyg Editor. The plugin allows to upload one or more images to the server.",
   "main": "./build/js/imagesMultiUpload.js",
   "bugs": {
@@ -11,6 +11,7 @@
     "build": "npm run build-js && npm run build-css",
     "build-js": "babel src/js -d build/js",
     "build-css": "postcss src/css --dir build/css",
+    "postinstall": "npm install && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
