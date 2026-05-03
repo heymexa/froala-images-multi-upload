@@ -12,10 +12,9 @@
 
   let $ = null;
 
-  const buildAccept = allowedTypes =>
-    (allowedTypes && allowedTypes.length
-      ? allowedTypes.map(t => `image/${t.toLowerCase()}`).join(', ')
-      : 'image/*');
+  const buildAccept = allowedTypes => (allowedTypes && allowedTypes.length
+    ? allowedTypes.map(t => `image/${t.toLowerCase()}`).join(', ')
+    : 'image/*');
 
   const buildDropZone = allowedTypes => `
     <div class="fr-image-upload-layer fr-active fr-layer fp-image-upload-dropzone">
@@ -32,8 +31,9 @@
         <button class="multi-upload__btn multi-upload__insert-btn" disabled>Insert images</button>
         <button class="multi-upload__btn multi-upload__cancel-btn">Cancel</button>
     </div></div>`;
-  const buildDropTemplate = allowedTypes =>
-    `<div class="images-multi-upload">${buildDropZone(allowedTypes)}${multiUpload}</div>`;
+  const buildDropTemplate = allowedTypes => (
+    `<div class="images-multi-upload">${buildDropZone(allowedTypes)}${multiUpload}</div>`
+  );
 
   const IMAGE_UPLOAD_STATUS_PENDING = 1;
   const IMAGE_UPLOAD_STATUS_SUCCESS = 2;
@@ -411,7 +411,7 @@
         const ed = $popup.data('instance') || editor;
         ed.events.disableBlur();
         imagesUpload.add(event.currentTarget.files);
-        event.currentTarget.value = null; // reset input file
+        event.currentTarget.value = null; // eslint-disable-line no-param-reassign
         ed.events.enableBlur();
       });
 
