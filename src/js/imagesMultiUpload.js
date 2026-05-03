@@ -12,11 +12,16 @@
 
   let $ = null;
 
-  const dropZone = `
+  const buildAccept = allowedTypes =>
+    (allowedTypes && allowedTypes.length
+      ? allowedTypes.map(t => `image/${t.toLowerCase()}`).join(', ')
+      : 'image/*');
+
+  const buildDropZone = allowedTypes => `
     <div class="fr-image-upload-layer fr-active fr-layer fp-image-upload-dropzone">
       <strong>Drop image</strong><br>(or click)
       <div class="fr-form">
-        <input type="file" multiple="" accept="image/jpeg, image/jpg, image/png, image/gif" 
+        <input type="file" multiple="" accept="${buildAccept(allowedTypes)}"
             tabindex="-1" aria-labelledby="fr-image-upload-layer-1" role="button" dir="auto">
       </div>
     </div>`;
@@ -27,7 +32,8 @@
         <button class="multi-upload__btn multi-upload__insert-btn" disabled>Insert images</button>
         <button class="multi-upload__btn multi-upload__cancel-btn">Cancel</button>
     </div></div>`;
-  const dropTemplate = `<div class="images-multi-upload">${dropZone}${multiUpload}</div>`;
+  const buildDropTemplate = allowedTypes =>
+    `<div class="images-multi-upload">${buildDropZone(allowedTypes)}${multiUpload}</div>`;
 
   const IMAGE_UPLOAD_STATUS_PENDING = 1;
   const IMAGE_UPLOAD_STATUS_SUCCESS = 2;
@@ -66,7 +72,9 @@
     }
 
     abortXhr() {
-      this.xhr.abort();
+      if (this.xhr) {
+        this.xhr.abort();
+      }
       return this;
     }
 
@@ -98,7 +106,8 @@
 
     renderImage(url) {
       this.renderUrl = url;
-      this.$image.css({ backgroundImage: `url(${url})` });
+      const safeUrl = String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      this.$image.css({ backgroundImage: `url("${safeUrl}")` });
     }
 
     getUrl() {
@@ -121,20 +130,30 @@
 
       const formData = new FormData();
       formData.append(this.editor.opts.imageUploadParam, this.image, this.image.name);
-      Object.keys(this.editor.opts.imageUploadParams).forEach(uploadParam => {
-        formData.append(uploadParam, this.editor.opts.imageUploadParams[uploadParam]);
-      });
+      const uploadParams = this.editor.opts.imageUploadParams;
+      if (uploadParams) {
+        Object.keys(uploadParams).forEach(uploadParam => {
+          formData.append(uploadParam, uploadParams[uploadParam]);
+        });
+      }
 
       this.xhr = new XMLHttpRequest();
       this.xhr.onload = () => {
-        console.log('image load');
         this.stopLoading();
-        let response = this.xhr.responseText;
-        if (typeof response === 'string') {
-          response = JSON.parse(response);
-        }
-        if (!response.link) {
+        if (this.xhr.status < 200 || this.xhr.status >= 300) {
           this.error();
+          return;
+        }
+        let response;
+        try {
+          response = JSON.parse(this.xhr.responseText);
+        } catch (e) {
+          this.error();
+          return;
+        }
+        if (!response || !response.link) {
+          this.error();
+          return;
         }
         if (!ImageUpload.isFileReaderAvailable()) {
           this.renderImage(response.link);
@@ -149,7 +168,6 @@
       this.xhr.upload.addEventListener(
         'progress',
         evt => {
-          console.log(evt);
           if (evt.lengthComputable) {
             let percentComplete = evt.loaded / evt.total;
             percentComplete = parseInt(percentComplete * 100, 10);
@@ -232,7 +250,7 @@
 
     handleEvents() {
       this.$insertButton.on('click.imagesUpload', this.onInsertButtonClick.bind(this));
-      this.$cancelButton.on('click.imagesUpload,', this.onCancelClick.bind(this));
+      this.$cancelButton.on('click.imagesUpload', this.onCancelClick.bind(this));
     }
 
     clean() {
@@ -272,18 +290,20 @@
 
     insertImages(images) {
       let imgIndex = 0;
-      this.editor.events.on('image.inserted', $img => {
+      const onInserted = $img => {
         /* eslint-disable */
         new ImageInsert($img, this.editor);
         this.editor.selection.setAfter($img.get(0));
         /* eslint-enable */
         imgIndex += 1;
         if (!images[imgIndex]) {
+          this.editor.events.off('image.inserted', onInserted);
           this.clean();
           return;
         }
         this.insertImage(images[imgIndex]);
-      });
+      };
+      this.editor.events.on('image.inserted', onInserted);
       this.insertImage(images[imgIndex]);
     }
 
@@ -320,7 +340,7 @@
 
     validate(file) {
       return (
-        this.editor.opts.imageAllowedTypes.indexOf(file.type.replace(/image\//g, '')) > -1 ||
+        this.editor.opts.imageAllowedTypes.indexOf(file.type.replace(/image\//g, '')) > -1 &&
         file.size < this.editor.opts.imageMaxSize
       );
     }
@@ -336,7 +356,6 @@
     }
 
     onImageRemove(image) {
-      console.log('image remove', image);
       const index = this.images.indexOf(image);
       if (index === -1) {
         return;
@@ -392,7 +411,7 @@
         const ed = $popup.data('instance') || editor;
         ed.events.disableBlur();
         imagesUpload.add(event.currentTarget.files);
-        this.value = null; // reset input file
+        event.currentTarget.value = null; // reset input file
         ed.events.enableBlur();
       });
 
@@ -464,7 +483,7 @@
       if (!uploadPopup) {
         uploadPopup = new UploadPopup({
           editor,
-          template: dropTemplate,
+          template: buildDropTemplate(editor.opts.imageAllowedTypes),
           name: POPUP_NAME,
           $: editor.$
         });

@@ -5,7 +5,7 @@
   --progressbar-bg-color: #fff;
   --progressbar-line-color: #49d20d;
   --close-btn-color: #aaa;
-  --cancel-btn-color: #454545;;
+  --cancel-btn-color: #454545;
   --cancel-btn-bg-color: #ecf0f1;
   --cancel-btn-border-color: #dadedf;
   --insert-btn-color: #fff;
@@ -35,6 +35,48 @@
   &__content {
     height: 300px;
     overflow-y: auto;
+  }
+
+  &__btn {
+    position: relative;
+    vertical-align: top;
+    width: auto;
+    padding: 10px 20px;
+    font-size: 18px;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    border: 0;
+    cursor: pointer;
+  }
+
+  &__btn:active {
+    outline: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    opacity: 0.8;
+    top: 1px;
+  }
+
+  &__btn:hover {
+    opacity: 0.8;
+  }
+
+  &__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &__cancel-btn {
+    color: var(--cancel-btn-color);
+    background: var(--cancel-btn-bg-color);
+    border-bottom: 2px solid var(--cancel-btn-border-color);
+  }
+
+  &__insert-btn {
+    color: var(--insert-btn-color);
+    background: var(--insert-btn-bg-color);
+    border-bottom: 2px solid var(--insert-btn-border-color);
+    margin-right: 10px;
   }
 
   @media (max-width: 480px) {
@@ -115,50 +157,6 @@
     color: var(--close-btn-color);
     background: transparent;
     cursor: pointer;
-  }
-}
-
-.multi-upload {
-  &__btn {
-    position: relative;
-    vertical-align: top;
-    width: auto;
-    padding: 10px 20px;
-    font-size: 18px;
-    text-align: center;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-    border: 0;
-    cursor: pointer;
-  }
-
-  &__btn:active {
-    outline: none;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-    opacity: 0.8;
-    top: 1px;
-  }
-
-  &__btn:hover {
-    opacity: 0.8;
-  }
-
-  &__btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-
-  &__cancel-btn {
-    color: var(--cancel-btn-color);
-    background: var(--cancel-btn-bg-color);
-    border-bottom: 2px solid var(--cancel-btn-border-color);
-  }
-
-  &__insert-btn {
-    color: var(--insert-btn-color);
-    background: var(--insert-btn-bg-color);
-    border-bottom: 2px solid var(--insert-btn-border-color);
-    margin-right: 10px;
   }
 }
 

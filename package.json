@@ -9,9 +9,9 @@
   "scripts": {
     "lint": "eslint --color ./src || true",
     "build": "npm run build-js && npm run build-css",
-    "build-js": "babel src/js -d build/js",
+    "build-js": "babel src/js --out-dir build/js",
     "build-css": "postcss src/css --dir build/css",
-    "postinstall": "npm install && npm run build",
+    "postinstall": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -35,9 +35,9 @@
     "url": "git+https://github.com/heymexa/froala-images-multi-upload.git"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
+    "@babel/cli": "^7.23.0",
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
     "eslint": "^5.6.1",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.14.0",

@@ -4,10 +4,16 @@ The plugin for one of best wysiwyg-editors - [Froala Editor](https://www.froala.
 
 ## Installing
 
-Download or use `npm`
+Install from npm:
 
 ```shell
-npm install https://github.com/heymexa/froala-images-multi-upload.git
+npm install froala-images-multi-upload
+```
+
+Or install directly from the GitHub repository:
+
+```shell
+npm install github:heymexa/froala-images-multi-upload
 ```
 
 ## Usage
