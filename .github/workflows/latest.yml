@@ -1,0 +1,58 @@
+name: Latest
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+concurrency:
+  group: latest-release
+  cancel-in-progress: true
+
+jobs:
+  latest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build
+        run: npm run build
+
+      - name: Package build artifacts
+        run: |
+          cd build
+          zip -r ../imagesMultiUpload-latest.zip js css
+
+      - name: Move latest tag
+        run: |
+          git tag -f latest ${{ github.sha }}
+          git push -f origin refs/tags/latest
+
+      - name: Update latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest (master)
+          body: |
+            Rolling build from the latest commit on `master` (${{ github.sha }}).
+            For stable releases see the tagged versions.
+          prerelease: true
+          files: |
+            imagesMultiUpload-latest.zip
+            build/js/imagesMultiUpload.js
+            build/css/imagesMultiUpload.css
